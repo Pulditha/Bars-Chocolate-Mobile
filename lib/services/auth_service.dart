@@ -19,8 +19,10 @@ class AuthService {
         var data = json.decode(response.body);
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data['token']);
+        await prefs.setString('name', data['name']); // Store the name
         return null; // Success
-      } else {
+
+    } else {
         return ErrorHandler.getErrorMessage(response.body);
       }
     } catch (e) {

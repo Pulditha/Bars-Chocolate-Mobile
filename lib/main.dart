@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'widgets/bottom_navbar.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
 
 void main() {
@@ -22,7 +22,8 @@ class MyApp extends StatelessWidget {
           } else if (snapshot.hasError) {
             return Scaffold(body: Center(child: Text('Error loading app')));
           } else {
-            return snapshot.data == true ? HomeScreen() : LoginScreen();
+            // ✅ Redirect to BottomNavBar() after login
+            return snapshot.data == true ? BottomNavBar() : LoginScreen();
           }
         },
       ),

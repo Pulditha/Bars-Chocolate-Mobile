@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../widgets/bottom_navbar.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
@@ -19,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     String? error = await authService.login(emailController.text, passwordController.text);
     if (error == null) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BottomNavBar()));
     } else {
       setState(() => errorMessage = error);
     }

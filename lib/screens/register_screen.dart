@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import '../widgets/bottom_navbar.dart';
+import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -28,8 +29,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (error == null) {
       setState(() {
-        message = "Registration Successful! Please log in.";
+        message = "Registration Successful!";
         isSuccess = true;
+      });
+
+      // Redirect to HomeScreen after successful registration
+      Future.delayed(Duration(seconds: 1), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => BottomNavBar()),
+        );
       });
     } else {
       setState(() {
