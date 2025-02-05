@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user.dart';
 import '../utils/constants.dart';
 import '../utils/error_handler.dart';
+
 
 class AuthService {
   // LOGIN METHOD
@@ -19,15 +21,42 @@ class AuthService {
         var data = json.decode(response.body);
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data['token']);
-        await prefs.setString('name', data['name']); // Store the name
+        await prefs.setString('user', jsonEncode(data['user']));
         return null; // Success
-
-    } else {
+      } else {
         return ErrorHandler.getErrorMessage(response.body);
       }
     } catch (e) {
       return 'Network Error. Please try again.';
     }
+  }
+
+  // GET AUTH TOKEN METHOD
+  Future<String?> getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  // GET LOGGED-IN USER PROFILE AS USERMODEL
+  Future<UserModel?> getUserProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userData = prefs.getString('user');
+
+    if (userData != null && userData.isNotEmpty) {
+      try {
+        Map<String, dynamic> userMap = jsonDecode(userData);
+        return UserModel.fromJson(userMap);
+      } catch (e) {
+        return null; // Handle JSON parsing error
+      }
+    }
+    return null;
+  }
+
+  // GET USERNAME METHOD
+  Future<String?> getUsername() async {
+    UserModel? user = await getUserProfile();
+    return user?.name;
   }
 
   // REGISTER METHOD
@@ -63,8 +92,12 @@ class AuthService {
     String? token = prefs.getString('token');
     final url = Uri.parse("$BASE_URL/logout");
 
-    await http.post(url, headers: {"Authorization": "Bearer $token"});
+    if (token != null) {
+      await http.post(url, headers: {"Authorization": "Bearer $token"});
+    }
+
     await prefs.remove('token');
+    await prefs.remove('user');
   }
 
   // CHECK LOGIN STATUS

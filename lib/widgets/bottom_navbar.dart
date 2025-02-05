@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
+import '../screens/product_detail_screen.dart';
 import '../screens/shop_screen.dart';
 import '../screens/categories_screen.dart';
 import '../screens/account_screen.dart';
@@ -14,7 +15,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    ProductListScreen(),
+    ProductListScreen(selectedCategory: 'All',),
     CategoriesScreen(),
     AccountScreen(),
   ];

@@ -4,6 +4,10 @@ import '../models/product.dart';
 import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
+  final String selectedCategory;
+
+  ProductListScreen({required this.selectedCategory});
+
   @override
   _ProductListScreenState createState() => _ProductListScreenState();
 }
@@ -14,7 +18,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
   TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'All';
+  late String _selectedCategory;
 
   final List<String> _categories = [
     'All',
@@ -30,18 +34,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedCategory = widget.selectedCategory; // Initialize with selected category
     _futureProducts = _productService.fetchProducts();
     _futureProducts.then((products) {
       setState(() {
         _allProducts = products;
-        _filteredProducts = products;
+        _filterProducts(); // Apply filtering
       });
     });
   }
 
   void _filterProducts() {
     String query = _searchController.text.toLowerCase();
-
     setState(() {
       _filteredProducts = _allProducts.where((product) {
         bool matchesSearch = product.name.toLowerCase().contains(query);
@@ -165,9 +169,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   Positioned(
                                     top: 8,
                                     right: 8,
-                                    child: CircleAvatar(
-                                      backgroundColor: Colors.white.withOpacity(0.8),
-                                      child: Icon(Icons.favorite_border, color: Colors.grey),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Add to wishlist logic here
+                                      },
+                                      child: CircleAvatar(
+                                        backgroundColor: Colors.white.withOpacity(0.8),
+                                        child: Icon(Icons.favorite_border, color: Colors.red),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -184,9 +193,49 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 ),
                               ),
                               SizedBox(height: 5),
-                              Text(
-                                "${product.currency} ${product.price}",
-                                style: TextStyle(fontSize: 14, color: Colors.brown, fontWeight: FontWeight.bold),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (product.discountPrice != null &&
+                                        double.tryParse(product.discountPrice!) != null &&
+                                        double.tryParse(product.price) != null &&
+                                        double.parse(product.discountPrice!) < double.parse(product.price))
+                                      Text(
+                                        "${product.currency} ${product.price}",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                          decoration: TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      "${product.currency} ${product.discountPrice ?? product.price}",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.brown,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Spacer(),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        // Add to cart logic here
+                                      },
+                                      child: Icon(Icons.shopping_cart, color: Colors.brown),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

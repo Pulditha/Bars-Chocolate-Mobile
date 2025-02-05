@@ -25,7 +25,13 @@ class ProductService {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonData = jsonDecode(response.body);
+        // Handle potential JSON decoding errors
+        Map<String, dynamic> jsonData;
+        try {
+          jsonData = jsonDecode(response.body);
+        } catch (e) {
+          throw Exception("Invalid JSON response: ${e.toString()}");
+        }
 
         if (!jsonData.containsKey("products")) {
           throw Exception("Unexpected API response format: Missing 'products' key.");
@@ -33,6 +39,10 @@ class ProductService {
 
         List<dynamic> productList = jsonData["products"]; // Extract the list
         return productList.map((item) => Product.fromJson(item)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception("Unauthorized: Please log in again.");
+      } else if (response.statusCode == 404) {
+        throw Exception("Resource not found.");
       } else {
         throw Exception("Failed to load products: ${response.statusCode}");
       }

@@ -7,6 +7,7 @@ class Product {
   final String description;
   final List<String> images;
   final String price;
+  final String? discountPrice; // Nullable to handle cases where there's no discount
   final String currency;
   final int stockQuantity;
   final String stockStatus;
@@ -19,6 +20,7 @@ class Product {
     required this.description,
     required this.images,
     required this.price,
+    this.discountPrice, // Nullable
     required this.currency,
     required this.stockQuantity,
     required this.stockStatus,
@@ -45,6 +47,7 @@ class Product {
       description: json['description'],
       images: imageList,
       price: json['price'],
+      discountPrice: json['discount_price'] != null ? json['discount_price'].toString() : null,
       currency: json['currency'],
       stockQuantity: json['stock_quantity'],
       stockStatus: json['stock_status'],
