@@ -32,7 +32,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.brown[800], // Chocolate theme color
+        selectedItemColor: Colors.brown, // Chocolate theme color
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         items: [

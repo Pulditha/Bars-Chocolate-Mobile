@@ -1,6 +1,8 @@
+import 'package:bar_chocolate_app/screens/wishlist_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/product_service.dart';
 import '../models/product.dart';
+import 'cart_screen.dart';
 import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -25,7 +27,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     'DARK',
     'MILK',
     'WHITE',
-    'FRUIT & NUT',
+    'FRUITNNUT',
     'STRAWBERRY',
     'CARAMEL',
     'VEGAN'
@@ -34,7 +36,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = widget.selectedCategory; // Initialize with selected category
+    _selectedCategory =
+        widget.selectedCategory; // Initialize with selected category
     _futureProducts = _productService.fetchProducts();
     _futureProducts.then((products) {
       setState(() {
@@ -49,7 +52,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     setState(() {
       _filteredProducts = _allProducts.where((product) {
         bool matchesSearch = product.name.toLowerCase().contains(query);
-        bool matchesCategory = (_selectedCategory == 'All' || product.category == _selectedCategory);
+        bool matchesCategory = (_selectedCategory == 'All' ||
+            product.category == _selectedCategory);
         return matchesSearch && matchesCategory;
       }).toList();
     });
@@ -65,21 +69,57 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Products")),
+      appBar: AppBar(
+        title: Text(
+          "Shop",
+          style: TextStyle(fontWeight: FontWeight.bold,),
+        ),
+
+        actions: [
+          IconButton(
+            icon: Icon(Icons.favorite_border, color: Colors.brown[800]),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => WishlistScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.shopping_cart_outlined, color: Colors.brown[800]),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CartScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+
       body: Column(
         children: [
+          // Search Bar
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(10.0),
             child: TextField(
               controller: _searchController,
               onChanged: (value) => _filterProducts(),
               decoration: InputDecoration(
                 hintText: "Search products...",
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                prefixIcon: Icon(Icons.search, color: Colors.brown),
+                filled: true,
+                fillColor: Colors.grey[200],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
+
+          // Category Chips
           SizedBox(
             height: 50,
             child: ListView.builder(
@@ -93,16 +133,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     label: Text(category),
                     selected: _selectedCategory == category,
                     onSelected: (_) => _selectCategory(category),
-                    selectedColor: Colors.brown,
+                    selectedColor: Colors.brown.shade700,
                     backgroundColor: Colors.grey[300],
                     labelStyle: TextStyle(
-                      color: _selectedCategory == category ? Colors.white : Colors.black,
+                      color: _selectedCategory == category
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 );
               },
             ),
           ),
+
+          // Product Grid
           Expanded(
             child: FutureBuilder<List<Product>>(
               future: _futureProducts,
@@ -113,133 +158,151 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 } else {
                   return GridView.builder(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(10),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 0.7,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 0.75,
                     ),
                     itemCount: _filteredProducts.length,
                     itemBuilder: (context, index) {
                       Product product = _filteredProducts[index];
-                      String imageUrl = product.images.isNotEmpty ? product.images.first : '';
+                      String imageUrl = product.images.isNotEmpty ? product
+                          .images.first : '';
                       if (imageUrl.isNotEmpty && !imageUrl.startsWith('http')) {
-                        imageUrl = "https://bars-chocolate.online/storage/$imageUrl";
+                        imageUrl =
+                        "https://bars-chocolate.online/storage/$imageUrl";
                       }
+
+                      // Category-based color mapping
+                      Map<String, Color> categoryColors = {
+                        'DARK': Colors.brown.shade900,
+                        'MILK': Colors.brown.shade300,
+                        'WHITE': Colors.amber.shade100,
+                        'FRUITNNUT': Colors.orange.shade300,
+                        'STRAWBERRY': Colors.pink.shade200,
+                        'CARAMEL': Colors.orange.shade500,
+                        'VEGAN': Colors.green.shade300,
+                      };
+
+                      Color cardColor = categoryColors[product.category
+                          .toUpperCase()] ?? Colors.grey.shade200;
 
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(product: product),
+                              builder: (context) =>
+                                  ProductDetailScreen(product: product),
                             ),
                           );
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black12, blurRadius: 6),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              // Discount Badge (Only if there's a discount)
+                              if (product.discountPrice != null &&
+                                  double.tryParse(product.discountPrice!) != null &&
+                                  double.tryParse(product.price) != null &&
+                                  double.parse(product.discountPrice!) < double.parse(product.price))
+                                Container(
+                                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                                  margin: EdgeInsets.only(top: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    "Save RS ${(double.parse(product.price) - double.parse(product.discountPrice!)).toStringAsFixed(2)}",
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+
+                              // Product Image Section
                               Stack(
                                 children: [
                                   ClipRRect(
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                                     child: imageUrl.isNotEmpty
                                         ? Image.network(
                                       imageUrl,
-                                      height: 120,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
+                                      height: 120, // Adjusted for better proportions
+                                      fit: BoxFit.contain, // Ensures full-width image without distortion
                                       loadingBuilder: (context, child, loadingProgress) {
                                         if (loadingProgress == null) return child;
                                         return Center(child: CircularProgressIndicator());
                                       },
                                       errorBuilder: (context, error, stackTrace) {
-                                        return Icon(Icons.broken_image, color: Colors.red, size: 80);
+                                        return Container(
+                                          height: 120,
+                                          color: Colors.grey[300],
+                                          child: Icon(Icons.broken_image, color: Colors.red, size: 50),
+                                        );
                                       },
                                     )
-                                        : Icon(Icons.image_not_supported, color: Colors.grey, size: 80),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        // Add to wishlist logic here
-                                      },
-                                      child: CircleAvatar(
-                                        backgroundColor: Colors.white.withOpacity(0.8),
-                                        child: Icon(Icons.favorite_border, color: Colors.red),
-                                      ),
+                                        : Container(
+                                      height: 120,
+                                      color: Colors.grey[300],
+                                      child: Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
                                     ),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 10),
+                              SizedBox(height: 8),
+
+                              // Product Name
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Text(
                                   product.name,
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              SizedBox(height: 5),
+                              SizedBox(height: 4),
+
+                              // Product Category
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    if (product.discountPrice != null &&
-                                        double.tryParse(product.discountPrice!) != null &&
-                                        double.tryParse(product.price) != null &&
-                                        double.parse(product.discountPrice!) < double.parse(product.price))
-                                      Text(
-                                        "${product.currency} ${product.price}",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                          decoration: TextDecoration.lineThrough,
-                                        ),
-                                      ),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      "${product.currency} ${product.discountPrice ?? product.price}",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.brown,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                child: Text(
+                                  product.category,
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54),
+                                ),
+                              ),
+                              SizedBox(height: 4),
+
+                              // Updated Price Section (Without Strikethrough)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text(
+                                  "${product.currency} ${product.discountPrice ?? product.price}",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               Spacer(),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        // Add to cart logic here
-                                      },
-                                      child: Icon(Icons.shopping_cart, color: Colors.brown),
-                                    ),
-                                  ],
-                                ),
-                              ),
+
+                              // Add to Cart Button
+
                             ],
                           ),
                         ),
+
                       );
                     },
                   );

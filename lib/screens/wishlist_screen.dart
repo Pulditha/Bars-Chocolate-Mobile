@@ -58,6 +58,72 @@ class _WishlistScreenState extends State<WishlistScreen> {
     setState(() => _isLoading = false);
   }
 
+  /// Get category-based background color
+  Color _getCategoryColor(String category) {
+    final Map<String, Color> categoryColors = {
+      'DARK': Colors.brown.shade900,
+      'MILK': Colors.brown.shade300,
+      'WHITE': Colors.amber.shade100,
+      'FRUITNNUT': Colors.orange.shade300,
+      'STRAWBERRY': Colors.pink.shade200,
+      'CARAMEL': Colors.orange.shade500,
+      'VEGAN': Colors.green.shade300,
+    };
+    return categoryColors[category.toUpperCase()] ?? Colors.grey.shade200;
+  }
+
+  /// Build Wishlist Item
+  Widget _buildWishlistItem(Product product) {
+    String imageUrl = product.images.isNotEmpty
+        ? "https://bars-chocolate.online/storage/${product.images.first}"
+        : "";
+    Color categoryColor = _getCategoryColor(product.category);
+
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      child: ListTile(
+        contentPadding: EdgeInsets.all(12),
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: categoryColor, // Apply category color
+            borderRadius: BorderRadius.circular(10),
+            image: imageUrl.isNotEmpty
+                ? DecorationImage(
+              image: NetworkImage(imageUrl),
+              fit: BoxFit.cover,
+              onError: (error, stackTrace) => null,
+            )
+                : null,
+          ),
+          child: imageUrl.isEmpty
+              ? Icon(Icons.image_not_supported, size: 30, color: Colors.grey)
+              : null,
+        ),
+        title: Text(
+          product.name,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Text(
+          "${product.currency} ${product.price}",
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.delete, color: Colors.red),
+          onPressed: _isLoading
+              ? null
+              : () async {
+            await _wishlistService.toggleWishlist(product.id, "remove the product");
+            setState(() => _wishlistItems.remove(product));
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,33 +132,23 @@ class _WishlistScreenState extends State<WishlistScreen> {
         children: [
           Expanded(
             child: _wishlistItems.isEmpty
-                ? Center(child: Text("Your wishlist is empty"))
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_border, size: 80, color: Colors.redAccent),
+                  SizedBox(height: 10),
+                  Text(
+                    "Your wishlist is empty",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            )
                 : ListView.builder(
               itemCount: _wishlistItems.length,
               itemBuilder: (context, index) {
-                final product = _wishlistItems[index];
-                return ListTile(
-                  leading: Image.network(
-                    "https://bars-chocolate.online/storage/${product.images.isNotEmpty ? product.images.first : ''}",
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(Icons.broken_image, size: 50);
-                    },
-                  ),
-                  title: Text(product.name),
-                  subtitle: Text("${product.currency} ${product.price}"),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: _isLoading
-                        ? null
-                        : () async {
-                      await _wishlistService.toggleWishlist(product.id, "remove the product");
-                      setState(() => _wishlistItems.removeAt(index));
-                    },
-                  ),
-                );
+                return _buildWishlistItem(_wishlistItems[index]);
               },
             ),
           ),
@@ -103,11 +159,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
                 onPressed: _isLoading ? null : _moveAllToCart,
                 icon: _isLoading
                     ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Icon(Icons.shopping_cart),
-                label: Text("Move All to Cart"),
+                    : Icon(Icons.shopping_cart, color: Colors.white),
+                label: Text("Move All to Cart",style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.brown,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ),

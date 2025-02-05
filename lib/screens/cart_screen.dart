@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/cart.dart';
 import '../services/cart_service.dart';
@@ -46,12 +45,18 @@ class _CartScreenState extends State<CartScreen> {
     try {
       await _cartService.checkout();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Checkout successful! Your cart is now empty.")),
+        SnackBar(
+          content: Text("Checkout successful! Your cart is now empty."),
+          backgroundColor: Colors.green,
+        ),
       );
-      _loadCart(); // Refresh cart after checkout
+      _loadCart();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Checkout failed: $e")),
+        SnackBar(
+          content: Text("Checkout failed: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -59,7 +64,10 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("My Cart")),
+      appBar: AppBar(
+        title: Text(" My Cart", style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
       body: FutureBuilder<List<CartItem>>(
         future: _cartFuture,
         builder: (context, snapshot) {
@@ -68,12 +76,12 @@ class _CartScreenState extends State<CartScreen> {
           } else if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("Your cart is empty."));
+            return Center(child: Text("🛍️ Your cart is empty.", style: TextStyle(fontSize: 18)));
           }
 
           List<CartItem> cartItems = snapshot.data!;
           double subtotal = cartItems.fold(0, (sum, item) => sum + (item.finalPrice * item.quantity));
-          double total = subtotal; // You can add tax or discounts if needed
+          double total = subtotal;
 
           return Column(
             children: [
@@ -88,48 +96,75 @@ class _CartScreenState extends State<CartScreen> {
                     }
 
                     return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      child: ListTile(
-                        leading: imageUrl.isNotEmpty
-                            ? Image.network(
-                          imageUrl,
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(Icons.broken_image, size: 50, color: Colors.grey);
-                          },
-                        )
-                            : Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                        title: Text(item.product.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 3,
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Row(
                           children: [
-                            Text("Category: ${item.category}"),
-                            Text(
-                              "${item.product.currency} ${item.finalPrice.toStringAsFixed(2)} x ${item.quantity}",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            // Image with category-colored background
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: _getCategoryColor(item.category),
+                                borderRadius: BorderRadius.circular(10),
+                                image: imageUrl.isNotEmpty
+                                    ? DecorationImage(
+                                  image: NetworkImage(imageUrl),
+                                  fit: BoxFit.cover,
+                                  onError: (error, stackTrace) {
+                                    return;
+                                  },
+                                )
+                                    : null,
+                              ),
+                              child: imageUrl.isEmpty
+                                  ? Icon(Icons.image_not_supported, color: Colors.white, size: 40)
+                                  : null,
                             ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.remove_circle_outline),
-                                  onPressed: item.quantity > 1
-                                      ? () => _updateQuantity(item.productId, false)
-                                      : () => _toggleCart(item.productId, remove: true),
-                                ),
-                                Text(item.quantity.toString(), style: TextStyle(fontSize: 16)),
-                                IconButton(
-                                  icon: Icon(Icons.add_circle_outline),
-                                  onPressed: () => _updateQuantity(item.productId, true),
-                                ),
-                              ],
+                            SizedBox(width: 12),
+
+                            // Product Details
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  Text("${item.category}", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                                  Text(
+                                    "${item.product.currency} ${item.finalPrice.toStringAsFixed(2)} x ${item.quantity}",
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown),
+                                  ),
+                                  SizedBox(height: 6),
+
+                                  // Quantity Buttons
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+                                        onPressed: item.quantity > 1
+                                            ? () => _updateQuantity(item.productId, false)
+                                            : () => _toggleCart(item.productId, remove: true),
+                                      ),
+                                      Text(item.quantity.toString(), style: TextStyle(fontSize: 16)),
+                                      IconButton(
+                                        icon: Icon(Icons.add_circle_outline, color: Colors.green),
+                                        onPressed: () => _updateQuantity(item.productId, true),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Delete Icon
+                            IconButton(
+                              icon: Icon(Icons.delete_forever, color: Colors.red),
+                              onPressed: () => _toggleCart(item.productId, remove: true),
                             ),
                           ],
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _toggleCart(item.productId, remove: true),
                         ),
                       ),
                     );
@@ -137,32 +172,49 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
 
-              // Summary and Checkout Button
+              // Checkout Summary
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
-                    BoxShadow(color: Colors.black12, blurRadius: 4),
+                    BoxShadow(color: Colors.black12, blurRadius: 6),
                   ],
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Subtotal: LKR ${subtotal.toStringAsFixed(2)}", style: TextStyle(fontSize: 16)),
-                    Text("Total: LKR ${total.toStringAsFixed(2)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Subtotal:", style: TextStyle(fontSize: 16)),
+                        Text("LKR ${subtotal.toStringAsFixed(2)}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Total:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text("LKR ${total.toStringAsFixed(2)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.brown)),
+                      ],
+                    ),
+                    SizedBox(height: 12),
 
-                    SizedBox(height: 10),
+                    // Checkout Button
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: _checkout,
+                        icon: Icon(Icons.shopping_cart_checkout, color: Colors.white),
+                        label: Text("Proceed to Checkout", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold
+                        ,color: Colors.white)),
                         style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          backgroundColor: Colors.brown,
                         ),
-                        child: Text("Proceed to Checkout", style: TextStyle(fontSize: 16)),
                       ),
                     ),
                   ],
@@ -173,5 +225,19 @@ class _CartScreenState extends State<CartScreen> {
         },
       ),
     );
+  }
+
+  Color _getCategoryColor(String category) {
+    Map<String, Color> categoryColors = {
+      'DARK': Colors.brown.shade900,
+      'MILK': Colors.brown.shade300,
+      'WHITE': Colors.amber.shade100,
+      'FRUITNNUT': Colors.orange.shade300,
+      'STRAWBERRY': Colors.pink.shade200,
+      'CARAMEL': Colors.orange.shade500,
+      'VEGAN': Colors.green.shade300,
+    };
+
+    return categoryColors[category.toUpperCase()] ?? Colors.grey.shade300;
   }
 }
